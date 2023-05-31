@@ -1,18 +1,21 @@
 const pool = require('./pool');
 
-const cohortName = process.argv[2]; // Get the cohort name from command line argument
-const limit = parseInt(process.argv[3]); // Get the limit from command line argument and parse it as an integer
+const cohortName = process.argv[2];
+const limit = process.argv[3] || 5;
+const values = [`%${cohortName}%`, limit];
 
-pool.query(`
-  SELECT students.id, students.name, cohorts.name AS cohort_name
+const queryString = `
+  SELECT students.id as student_id, students.name as name, cohorts.name as cohort
   FROM students
-  JOIN cohorts ON students.cohort_id = cohorts.id
-  WHERE cohorts.name = $1
+  JOIN cohorts ON cohorts.id = cohort_id
+  WHERE cohorts.name LIKE $1
   LIMIT $2;
-`, [cohortName, limit])
-.then(res => {
-  res.rows.forEach(user => {
-    console.log(`${user.name} has an id of ${user.id} and was in the ${user.cohort_name} cohort`);
+`;
+
+pool.query(queryString, values)
+  .then((res) => {
+    res.rows.forEach((user) => {
+      console.log(`${user.name} has an id of ${user.student_id} and was in the ${user.cohort} cohort`);
+    });
   })
-})
-.catch(err => console.error('query error', err.stack));
+  .catch((err) => console.error('query error', err.stack));
